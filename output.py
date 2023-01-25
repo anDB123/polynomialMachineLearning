@@ -3,64 +3,65 @@ from tensorflow import keras
 import numpy as np
 import matplotlib.pyplot as plt
 
-def polynomialEq(x):
-    return 5*x**2 + 3*x +1
+
+def f(x,par):
+   return par[0] + par[1]*x + par[2] * x**2
+ 
+Par = (0.5, 1, 0.2)
+sigma = 0.2
+ 
+n = 200
+a = np.zeros([n,2])
+for i in range(n):
+   a[i][0] = 10*(np.random.random_sample() - 0.5)
+   a[i][1] = f( a[i][0], Par ) + np.random.normal(0, sigma)
+
 
 #define inputs and outputs
-inputs = np.arange(0,1,0.001)
-outputs = []
-for input in inputs:
-    outputs.append( polynomialEq(input))
 
-scaling = np.max(outputs)
-outputs = outputs/scaling
 
 
 #define model
 
 model = keras.Sequential([
   keras.layers.Input(1, name='input'),
-  keras.layers.Dense(10),
-  keras.layers.Dense(10),
-  keras.layers.Dense(10),
-keras.layers.Dense(10),
-  keras.layers.Dense(10),
-  keras.layers.Dense(10),
-  keras.layers.Dense(10),
-  keras.layers.Dense(10),
-  keras.layers.Dense(10),
+  keras.layers.Dense(100, activation = "relu"),
   keras.layers.Dense(1, name='output'),
 ])
-model.build()
-model.summary()
+
 
 testing = False
 epochs = 5
 
 #compile model
 model.compile(
-    optimizer="adam",
-    loss=tf.keras.losses.BinaryCrossentropy(),
-    metrics=None,
-    loss_weights=None,
-    weighted_metrics=None,
-    run_eagerly=None,
-    steps_per_execution=None,
-    jit_compile=None,)
+     optimizer = tf.optimizers.Adam(learning_rate=0.01),
+      metrics = ['accuracy'],
+      loss = 'mse'   # mean square error\
+      )
 
-
+print ("shape 1 = ")
+print (a[:,0].shape)
+print ("shape 2 =")
+print (a[:,1].shape)
 #fit the model
-model.fit(inputs, outputs, epochs=epochs)
+model.fit(
+      a[:,0], a[:,1],
+      epochs = 100, # number of iteration
+      verbose = 0
+)
 
 #evaluate the model
-test_acc = model.evaluate(inputs, outputs)
+model.summary()
+test_acc = model.evaluate(a[:,0], a[:,1])
 
 #print results
 print('\nTest accuracy: {}'.format(test_acc))
-x_array =  np.arange(0,1,0.01)
-y_actual = (polynomialEq(x_array))
-y_model = model.predict(x_array)*scaling
-plt.plot(x_array,y_actual, label = "polynomial output")
-plt.plot(x_array,y_model, label = "machine learning output")
+x_array =  a[:,0]
+y_actual = a[:,1]
+x_model = np.arange(np.min(x_array),np.max(x_array),0.001)
+y_model = model.predict(x_model)
+plt.scatter(x_array,y_actual, label = "polynomial output",s=1)
+plt.plot(x_model,y_model, label = "machine learning output", color="green")
 plt.legend()
 plt.show()
